@@ -1,11 +1,17 @@
 {
   "name": "dsh-vscode-native",
   "displayName": "DeepSeek Harness Native",
-  "version": "0.2.2",
+  "version": "0.2.3",
+  "description": "Unofficial VS Code frontend for DeepSeek Harness: streaming chat, code context and tool diffs.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/ZhenyuePan/dsh-vscode-native.git" },
+  "homepage": "https://github.com/ZhenyuePan/dsh-vscode-native#readme",
+  "bugs": { "url": "https://github.com/ZhenyuePan/dsh-vscode-native/issues" },
+  "preview": true,
   "extensionKind": ["workspace"],
   "private": true,
   "engines": { "vscode": "^1.95.0" },
-  "categories": ["Chat"],
+  "categories": ["Machine Learning", "Other"],
   "activationEvents": ["onStartupFinished", "onView:dshNative.chat", "onCommand:dshNative.newSession"],
   "main": "./out/extension.js",
   "contributes": {
@@ -20,10 +26,14 @@
     "views": { "dshNative": [{ "type": "webview", "id": "dshNative.chat", "name": "Chat" }] }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p . && node scripts/vendor.cjs",
     "watch": "tsc -watch -p .",
+    "test": "node tests/editor-context.cjs && node tests/code-links.cjs",
+    "test:ui": "node tests/browser-ui.cjs",
+    "package:vsix": "vsce package",
     "test:runtime": "node out/test-runtime.js"
   },
-  "devDependencies": { "@types/node": "^22.10.2", "@types/vscode": "^1.95.0", "@types/ws": "^8.5.13", "typescript": "^5.7.2", "markdown-it": "^14.1.0" },
+  "devDependencies": { "@types/node": "^22.10.2", "@types/vscode": "^1.95.0", "@types/ws": "^8.5.13", "typescript": "^5.7.2", "markdown-it": "^14.1.0", "@vscode/vsce": "4.0.0", "playwright": "1.63.0" },
   "dependencies": { "ws": "^8.18.0" }
 }

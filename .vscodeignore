@@ -6,3 +6,7 @@ tsconfig.json
 tests/**
 scripts/**
 artifacts/**
+.github/**
+docs/**
+CONTRIBUTING.md
+.gitignore

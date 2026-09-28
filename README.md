@@ -1,38 +1,88 @@
-# DeepSeek Harness Native for VS Code — 0.2.2
+# DeepSeek Harness Native
 
-An MVP VS Code-native front end for `dsh web`. It launches a private local DSH runtime,
-authenticates through its one-time URL, then uses the documented Remote HTTP and WebSocket
-transport rather than embedding the DSH web page.
+[![CI](https://github.com/ZhenyuePan/dsh-vscode-native/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhenyuePan/dsh-vscode-native/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Development
+A compact, **unofficial** VS Code frontend for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+原生侧栏交互，连接本地或 Remote SSH 主机上的 `dsh web`，不嵌入 DSH 网页。
+
+> 社区实验项目，与 DeepSeek 官方无隶属关系。当前为开发预览，尚未上架 VS Code Marketplace。
+
+## Preview
+
+<img src="docs/images/sidebar-dark.png" alt="Compact dark sidebar with code context and tool diffs" width="320">
+
+截图使用模拟对话；不包含真实用户代码。[浅色预览](docs/images/sidebar-light.png)。
+
+## Features
+
+- 流式回复、会话切换、模型选择、停止生成与断线重连。
+- 编辑器选区自动显示文件名和行号；进入聊天框不会丢失引用。
+- 显式添加文件或选区，可预览和移除，右键菜单可固定代码引用。
+- Markdown 表格、列表、代码块复制，点击工作区文件链接跳转到代码行。
+- 可折叠思考过程、工具调用和文件差异卡片。
+- 无头像紧凑布局，适配 VS Code 主题和窄侧栏。
+
+## Install
+
+1. 从 [Releases](https://github.com/ZhenyuePan/dsh-vscode-native/releases/latest) 下载 `.vsix`。
+2. 在 VS Code 扩展视图的 `…` 菜单中选择 **Install from VSIX…**。
+3. 重载窗口，打开侧边栏 **DeepSeek Harness**。
+
+Remote SSH：先连接开发主机，在远程窗口安装；Node.js、DSH 配置及工作区文件都位于该主机。
+
+### Prerequisites
+
+- VS Code 1.95 或更新版本；开发和 CI 使用 Node.js 24 LTS、npm/npx。
+- 按 [DSH 官方说明](https://github.com/deepseek-ai/deepseek-harness) 配好模型/认证，并先确认 `dsh` 本身可以完成一次对话。
+- 首次启动需要访问 npm。插件按需执行 `npx -y @deepseek-ai/dsh@latest web --no-open --port 0`。
+- Linux Remote SSH 已做真实后端测试；Windows/macOS 尚未完成端到端验证。
+- 模型调用使用你的 DSH 配置，可能产生模型服务费用；插件不附送额度。
+
+## Use
+
+选中代码后，输入框上方会出现 `文件名:起始行–结束行` 胶囊。发送时附带这些选区及显式附件，
+不自动附加整个文件；点击胶囊定位代码，点击 `×` 取消引用。底部 `@` 添加文件上下文。
+
+顶部 `+` 新建会话，时钟按钮切换历史，省略号打开运行日志。Enter 发送，Shift+Enter 换行。
+模型名称可点击切换；生成期间发送按钮变成停止。上翻对话后可点击“回到最新”。
+
+### Known limitations
+
+- 只加载 follow 的最近历史窗口，暂未实现向前分页。
+- 审批暂需在支持的 DSH 客户端处理；本侧栏没有完整审批流程。
+- Agent 标签只是当前工作方式标识，不是模式切换器。
+- Diff 展示工具返回的变更片段，不保证是完整文件差异。
+- 运行时使用 DSH `latest`，上游协议变化可能导致兼容问题。
+- 目前通过 Release 手动安装更新；GitHub 的新提交不会自动更新你已安装的 VSIX。
+
+## Develop
 
 ```bash
-npm install
+git clone https://github.com/ZhenyuePan/dsh-vscode-native.git
+cd dsh-vscode-native
+npm ci
 npm run compile
+npm test
+npx playwright install chromium
+npm run test:ui
+npm run package:vsix
 ```
 
-Install the VSIX in the Remote SSH window and reload VS Code. The extension starts `npx -y @deepseek-ai/dsh@latest web --no-open --port 0` on demand.
+编译时会复制 Markdown 渲染器及其许可证到 `media/`。打包时会自动重新编译。
+Linux 安装浏览器依赖可用 `npx playwright install --with-deps chromium`。
+UI 测试使用模拟数据，不需要模型密钥。可选的真实集成测试见 [贡献指南](CONTRIBUTING.md)。
 
-`npm run test:runtime` accepts `DSH_URL` (a token-bearing launch URL) and exercises list/create/prompt/cancel plus a `session/follow` mux subscription.
+## Releases and contributions
 
-## 紧凑侧栏
+每次 main 提交和 Pull Request 自动运行 CI。维护者推送与版本匹配的标签（如 `v0.2.3`）后，
+工作流会重新测试、打包并创建 GitHub Release，附上 VSIX 和 `SHA256SUMS.txt`。
+**普通源码提交不发布新版；该工作流也不会向 VS Code 商店发布。**
 
-- 顶部 `+` 新建会话；时钟搜索并切换历史会话；省略号查看运行日志。
-- 底部 `@` 显式添加当前文件、当前选区或选择的文本文件；点击胶囊 `×` 移除。
-- 编辑器选中的代码自动显示为文件名与行号胶囊，切换到聊天框不会丢失；点击胶囊查看原位置，`×` 可取消本次自动引用。右键“引用到 DeepSeek Harness”可固定引用。
-- 回复支持 Markdown 表格、列表、引用和带复制按钮的代码块；工作区文件链接可跳转到对应行。发送后的代码引用可折叠查看。
-- 点击模型名称读取 DSH 的模型目录并选择会话模型。
-- Enter 发送，Shift+Enter 换行；生成过程中发送按钮变为停止。
-- 思考及工具过程可展开；工具返回文件差异时提供变更卡片和 VS Code 差异视图。
-- 发送失败保留草稿；重载后恢复当前会话。
-- 0.2.2 按 Cline 的紧凑侧栏布局调整：小圆角输入框、独立模型工具栏、边框工具卡片，跟随 VS Code 主题。多行输入自动增高，上翻历史时可“回到最新”。设计参考及第三方说明见 `THIRD_PARTY_NOTICES.md`。
+欢迎 [报告问题](https://github.com/ZhenyuePan/dsh-vscode-native/issues) 和提交 PR。
+请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)、[更新记录](CHANGELOG.md) 和 [安全说明](SECURITY.md)。
 
-当前是第一版：历史读取 follow 的最近消息窗口，未提供向前分页；Agent 标签只表示当前工作方式；差异视图展示工具实际返回的变更片段；审批需在 DSH 客户端处理。只有显示为胶囊的选区及显式附件会随消息发送，不自动附加整个文件。
+## License and acknowledgements
 
-`node tests/runtime-ui.cjs` 启动真实 DSH、创建测试会话并请求一条简短回复（使用已配置的模型），验证流式消息和历史恢复。
-
-`node tests/browser-ui.cjs` 使用 Playwright 检查前端交互并截图，需要可用的 Playwright/Chromium。可通过 `PLAYWRIGHT_MODULE` 指定模块路径、`PLAYWRIGHT_CHROMIUM_EXECUTABLE` 指定浏览器，`UI_OUTPUT_DIR` 指定截图目录。截图使用测试对话，不是实时会话。
-
-`npx -y @vscode/vsce package -o dsh-vscode-native-0.2.2.vsix` 生成安装包，必须包含 `ws` 运行依赖和编译步骤复制的 Markdown 静态资源及许可证。
-
-前端静态资源位于 `media/`；回复通过禁用原始 HTML 的 markdown-it 渲染，不执行模型输出的 HTML，不加载外部图片。文件链接由扩展端校验；认证凭据不传入 Webview。
+[MIT](LICENSE)。Cline 提供了侧栏布局的设计参考，本项目独立实现界面与 DSH 通信，
+不捆绑 Cline 引擎或品牌素材。第三方组件说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

@@ -25,7 +25,7 @@ async function main() {
  await page.addScriptTag({content:fs.readFileSync(path.join(base,'transcript.js'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(base,'sidebar.js'),'utf8')});
  const dispatch = m=>page.evaluate(m=>window.dispatchEvent(new MessageEvent('message',{data:m})),m);
- await dispatch({type:'status',status:'ready',label:'panzi'});
+ await dispatch({type:'status',status:'ready',label:'workspace'});
  await page.getByLabel('消息',{exact:true}).fill('test'); await page.getByLabel('消息',{exact:true}).press('Enter');
  assert((await page.evaluate(()=>window.sent)).some(m=>m.type==='send'&&m.text==='test'));
  await dispatch({type:'error',message:'test error'}); assert.equal(await page.locator('textarea').inputValue(),'test');
