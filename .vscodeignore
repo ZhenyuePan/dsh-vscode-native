@@ -1,0 +1,8 @@
+.vscode/**
+src/**
+tsconfig.json
+**/*.map
+**/*.vsix
+tests/**
+scripts/**
+artifacts/**

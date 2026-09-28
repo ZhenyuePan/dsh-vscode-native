@@ -1,0 +1,25 @@
+# Dependencies, generated output and packaged extensions
+node_modules/
+out/
+artifacts/
+coverage/
+*.vsix
+*.tsbuildinfo
+media/markdown-it.min.js
+media/markdown-it.LICENSE
+
+# Local runtime data, credentials and diagnostic output
+.env
+.env.*
+!.env.example
+.dsh/
+*.log
+*.pem
+*.key
+.npmrc
+
+# OS/editor-local files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

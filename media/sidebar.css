@@ -1,0 +1,94 @@
+/* Cline-inspired layout independently implemented for DSH; see THIRD_PARTY_NOTICES.md. */
+:root {
+ color-scheme:dark light;
+ --bg:var(--vscode-sideBar-background,#181818); --fg:var(--vscode-foreground,#ccc);
+ --muted:var(--vscode-descriptionForeground,#969696); --line:var(--vscode-editorGroup-border,#313131);
+ --surface:var(--vscode-textCodeBlock-background,#202020); --input:var(--vscode-input-background,#252526);
+ --input-border:var(--vscode-input-border,#3c3c3c); --accent:var(--vscode-focusBorder,#007fd4);
+ --link:var(--vscode-textLink-foreground,#4daafc); --green:var(--vscode-testing-iconPassed,#73c991);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.55 var(--vscode-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif)}
+button,textarea{font:inherit}button{color:inherit;border:0;background:none;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}button:focus-visible,summary:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+button:hover:not(:disabled){background:var(--vscode-toolbar-hoverBackground,#ffffff12)}[hidden]{display:none!important}
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.toolbar{min-height:34px;padding:3px 10px 3px 14px;display:flex;align-items:center;gap:2px}
+.brand{font-size:11px;font-weight:600;letter-spacing:.4px;margin-right:auto}
+.icon{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;padding:5px;flex-shrink:0}
+.icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.taskbar{margin:0 14px;padding:8px 0 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+.task-label{font-size:10px;color:var(--muted);margin-bottom:3px;letter-spacing:.5px}
+.title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.connection{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px;min-width:0;max-width:40%}
+.connection span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.ready .dot{background:var(--green)}.connecting .dot{background:var(--vscode-editorWarning-foreground,#cca700);animation:pulse 1.5s infinite}
+.transcript{flex:1;min-height:0;overflow:auto;padding:2px 14px 16px;scrollbar-width:thin;overflow-wrap:anywhere}
+.empty{padding:28px 0 16px}.empty h2{font-size:18px;line-height:1.4;font-weight:600;margin:0 0 10px}
+.empty p{font-size:12px;color:var(--muted);margin:0}.suggestions{margin-top:18px;display:grid;gap:6px}
+.suggestions button{text-align:left;font-size:12px;border:1px solid var(--line);border-radius:3px;padding:7px 9px}
+.suggestions button:after{content:'↗';float:right;color:var(--muted)}
+.turn{margin:15px 0;min-width:0}.role{font-weight:600;font-size:12px;margin-bottom:7px}.user .role{display:none}
+.user-content{background:var(--vscode-textBlockQuote-background,#ffffff05);border:1px solid var(--line);border-radius:3px;padding:9px 10px}
+.user .content{white-space:pre-wrap}.content{min-width:0}.content p{margin:8px 0}
+.content>:first-child{margin-top:0}.content>:last-child{margin-bottom:0}
+.content h1,.content h2,.content h3,.content h4{font-size:14px;line-height:1.5;margin:15px 0 8px;font-weight:600}
+.content h1{font-size:17px}.content h2{font-size:15px}.content ul,.content ol{padding-left:20px;margin:8px 0}
+.content li{margin:4px 0}.content li>p{margin:3px 0}
+.content blockquote{border-left:3px solid var(--vscode-textBlockQuote-border,var(--line));color:var(--muted);margin:10px 0;padding:1px 10px}
+.content a{color:var(--link);text-decoration:none;cursor:pointer;overflow-wrap:anywhere}.content a:hover{text-decoration:underline}
+.content hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.content pre{overflow-x:auto;white-space:pre;padding:10px;background:var(--surface);font:12px/1.6 var(--vscode-editor-font-family,monospace);tab-size:2}
+.content code{font:12px var(--vscode-editor-font-family,monospace);background:var(--surface);padding:1px 3px;border-radius:2px}
+.content pre code{padding:0;background:none}
+.table-scroll{max-width:100%;overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:3px}
+.content table{border-collapse:collapse;font-size:12px;width:100%;min-width:220px}
+.content th,.content td{padding:6px 8px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);border-right:1px solid var(--line);min-width:70px}
+.content th{font-weight:600;background:var(--surface)}.content tr:last-child td{border-bottom:0}.content th:last-child,.content td:last-child{border-right:0}
+.code-block{border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:10px 0}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:4px 9px;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--line);font-size:11px}
+.code-header button{font-size:11px;padding:1px 4px;border-radius:2px}.content .code-block pre{margin:0;padding:9px;max-height:350px}
+.reason{margin:3px 0 10px;color:var(--muted);font-size:12px}
+.reason summary,.tool summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:7px;min-height:30px}
+.reason summary::-webkit-details-marker,.tool summary::-webkit-details-marker{display:none}
+.reason summary:before,.tool summary:before{content:'›';font-size:16px;width:8px;color:var(--muted);flex-shrink:0}
+details[open]>summary:before{transform:rotate(90deg)}.reason .content{padding-left:13px;border-left:1px solid var(--line);margin:6px 0 10px 3px}
+.tool{font-size:12px;margin:6px 0;border:1px solid var(--line);border-radius:3px;background:var(--surface);overflow:hidden}
+.tool summary{padding:6px 9px;min-height:36px}.tool .label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.tool .check{color:var(--green);font-size:12px}.tool .error{color:var(--vscode-errorForeground,#f48771)}
+.tool pre{font:11px/1.6 var(--vscode-editor-font-family,monospace);white-space:pre-wrap;border-top:1px solid var(--line);max-height:210px;overflow:auto;margin:0;padding:8px 10px}
+.tool small{color:var(--muted);font-size:10px;white-space:nowrap}
+.diff{border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:6px 0 12px;font-size:12px}
+.diff header{display:flex;gap:8px;align-items:center;padding:7px 9px;background:var(--surface)}
+.diff header span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diff pre{margin:0;padding:5px 9px;max-height:110px;overflow:auto;font:11px/1.6 var(--vscode-editor-font-family,monospace)}
+.added{background:var(--vscode-diffEditor-insertedTextBackground,#45b36b18)}.removed{background:var(--vscode-diffEditor-removedTextBackground,#ee626218)}
+.diff-link{display:block;width:100%;text-align:left;padding:6px 9px;font-size:11px;color:var(--link);border-top:1px solid var(--line)}
+.actions{display:flex;gap:2px;margin-top:6px;color:var(--muted)}.actions .icon{width:22px;height:22px}.actions svg{width:13px;height:13px}
+.notice{font-size:12px;color:var(--muted);padding:7px 0}.working{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;padding:8px 0}
+.working:before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1s infinite}
+.composer-wrap{padding:6px 14px 8px;flex-shrink:0;position:relative}
+.composer{border:1px solid var(--input-border);border-radius:3px;background:var(--input);position:relative}.composer:focus-within{border-color:var(--accent)}
+.chips{display:flex;gap:4px;flex-wrap:wrap;max-height:80px;overflow-y:auto;padding:7px 8px 0}.chips:empty{display:none}
+.chip{border:1px solid var(--line);border-radius:3px;padding:1px 4px;color:var(--muted);font-size:11px;display:flex;align-items:center;gap:4px;max-width:100%;background:var(--bg)}
+.chip .context-label{font:inherit;color:inherit;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;min-width:0}
+.chip button{font-size:13px;padding:0 2px}.auto-context{color:var(--fg)}.auto-context:before{content:'#';color:var(--link);font-size:12px}
+.too-large{border-color:var(--vscode-errorForeground,#f48771)}
+.composer textarea{display:block;resize:none;background:transparent;border:0;outline:none;color:var(--vscode-input-foreground,var(--fg));width:100%;height:84px;min-height:84px;max-height:180px;padding:9px 34px 9px 9px;font-size:13px;line-height:1.55;overflow-y:auto;scrollbar-width:thin}
+.composer textarea::placeholder{color:var(--vscode-input-placeholderForeground,#939393)}
+.composer-bottom{display:flex;align-items:center;gap:2px;min-width:0;padding-top:5px}
+.composer-bottom .icon{width:23px;height:23px;padding:4px;color:var(--muted)}
+.model{font-size:11px;color:var(--muted);padding:2px 4px;border-radius:3px;flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mode{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:0 7px;white-space:nowrap;margin-left:5px}
+.send{position:absolute;bottom:5px;right:5px;color:var(--fg)}.send:not(:disabled){color:var(--link)}
+.hint{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:5px;padding-top:4px}
+.keys{font-size:9px;white-space:nowrap}.jump-latest{position:absolute;top:-32px;left:50%;transform:translateX(-50%);background:var(--input);border:1px solid var(--input-border);border-radius:12px;padding:3px 10px;font-size:11px;box-shadow:0 2px 6px #0002}
+.jump-latest:hover:not(:disabled){background:var(--surface)}
+.errorbar{margin:0 14px 6px;padding:8px;border-radius:3px;border:1px solid var(--vscode-inputValidation-errorBorder,#be1100);font-size:12px;max-height:90px;overflow:auto}
+.errorbar button{float:right;font-size:11px;text-decoration:underline}.older{color:var(--muted);font-size:11px;text-align:center;padding:5px}
+.quoted-code{margin:7px 0 0;color:var(--muted);font-size:11px}.quoted-code summary{cursor:pointer;overflow-wrap:anywhere}
+.quoted-code pre{font:11px/1.6 var(--vscode-editor-font-family,monospace);max-height:190px;overflow:auto;white-space:pre-wrap;border-left:1px solid var(--line);padding:7px}
+@keyframes pulse{50%{opacity:.35}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+@media(max-width:300px){.keys{display:none}.composer-wrap,.transcript{padding-left:10px;padding-right:10px}.taskbar{margin:0 10px}}
+body.vscode-high-contrast .composer,body.vscode-high-contrast .tool,body.vscode-high-contrast .diff,body.vscode-high-contrast .chip,body.vscode-high-contrast .user-content{border-color:var(--vscode-contrastBorder,#fff)}

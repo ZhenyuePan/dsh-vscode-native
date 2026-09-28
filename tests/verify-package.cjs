@@ -1,0 +1,13 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const installed = process.argv[2];
+assert(installed, 'Pass the installed extension folder');
+const original = Module._load;
+Module._load = function(id, ...args) { return id === 'vscode' ? {} : original.call(this, id, ...args); };
+assert.equal(typeof require(path.join(installed, 'out/extension.js')).activate, 'function');
+for (const file of ['media/sidebar.css','media/sidebar.js','media/transcript.js','media/markdown-it.min.js','media/markdown-it.LICENSE','node_modules/ws/index.js']) assert(fs.existsSync(path.join(installed, file)), file);
+assert.equal(JSON.parse(fs.readFileSync(path.join(installed, 'package.json'))).version, '0.2.2');
+assert(fs.existsSync(path.join(installed, 'THIRD_PARTY_NOTICES.md')));
+console.log('Installed 0.2.2: entrypoint, ws dependency, licenses and all webview resources verified');
