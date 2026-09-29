@@ -4,13 +4,13 @@ export class DshRpcClient {
   public constructor(private readonly endpoint: DshEndpoint) {}
 
   /** `session/list` is the current exception: its generated parameter wire-name is `_request`. */
-  async call<T>(method: string, request: Record<string, Json>, wireName = 'request'): Promise<T> {
+  async call<T>(method: string, request: Record<string, Json>, wireName: string | null = 'request'): Promise<T> {
     const rpcId = uuid();
     const response = await fetch(`${this.endpoint.origin}/api/${method}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', cookie: this.endpoint.cookie },
       signal: AbortSignal.timeout(30_000),
-      body: JSON.stringify({ type: 'client-request', rpcId, method, payload: { args: wireName ? { [wireName]: request } : {} } })
+      body: JSON.stringify({ type: 'client-request', rpcId, method, payload: { args: wireName === null ? request : wireName ? { [wireName]: request } : {} } })
     });
     if (!response.ok) throw new Error(`${method}: HTTP ${response.status} ${await response.text()}`);
     const body = await response.json() as { type?: string; rpcId?: string; result?: RpcResult<T> };

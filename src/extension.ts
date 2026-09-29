@@ -4,6 +4,7 @@ import { hostname } from 'os';
 import { DshProcessManager } from './dsh/process';
 import { DshRpcClient } from './dsh/rpc';
 import { DshRemoteMux } from './dsh/mux';
+import { DshQuestions } from './dsh/questions';
 import { Json } from './dsh/protocol';
 import { EditorContext } from './editor-context';
 import { openCodeLink } from './code-links';
@@ -11,7 +12,7 @@ import { openCodeLink } from './code-links';
 export function activate(context: vscode.ExtensionContext): void {
   const runtime = new DshProcessManager();
   const output = vscode.window.createOutputChannel('DeepSeek Harness');
-  let connection: Promise<{ rpc: DshRpcClient; mux: DshRemoteMux }> | undefined;
+  let connection: Promise<{ rpc: DshRpcClient; mux: DshRemoteMux; questions: DshQuestions }> | undefined;
   let current: Awaited<NonNullable<typeof connection>> | undefined;
   let view: vscode.WebviewView | undefined;
   let activeSession = context.workspaceState.get<string>('activeSession');
@@ -37,6 +38,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
   const send = (value: object) => { void view?.webview.postMessage(value); };
+  const pushQuestions = () => send({ type: 'questions', sessionId: activeSession, items: current?.questions.items(activeSession) || [] });
   let codeContext: EditorContext;
   const pushContext = () => { if (codeContext) send({ type: 'attachments', items: codeContext.summary() }); };
   codeContext = new EditorContext(pushContext);
@@ -49,12 +51,16 @@ export function activate(context: vscode.ExtensionContext): void {
   const connect = () => {
     if (!connection) {
       send({ type: 'status', status: 'connecting', label: '正在连接…' });
-      connection = runtime.start().then(endpoint => {
-        current = { rpc: new DshRpcClient(endpoint), mux: new DshRemoteMux(endpoint) };
+      connection = runtime.start().then(async endpoint => {
+        const rpc = new DshRpcClient(endpoint), mux = new DshRemoteMux(endpoint);
+        const questions = new DshQuestions(rpc, mux, pushQuestions, fail);
+        current = { rpc, mux, questions };
+        if (activeSession) questions.track(activeSession);
+        await questions.start();
         output.appendLine(`Runtime connected: ${endpoint.origin}`);
         send({ type: 'status', status: 'ready', label: hostname() });
         return current;
-      }).catch(error => { connection = undefined; throw error; });
+      }).catch(error => { current?.questions.dispose(); current?.mux.close(); current = undefined; connection = undefined; throw error; });
     }
     return connection;
   };
@@ -63,9 +69,11 @@ export function activate(context: vscode.ExtensionContext): void {
     unsubscribe?.(); unsubscribe = undefined;
     const { mux } = await connect();
     activeSession = id;
+    current!.questions.track(id);
     diffs.clear();
     await context.workspaceState.update('activeSession', id);
     send({ type: 'session', id });
+    pushQuestions();
     const dispose = await mux.follow(id, value => {
       if (token === generation) { collectDiffs(value); send({ type: 'frame', value }); }
     }, fail);
@@ -105,7 +113,7 @@ export function activate(context: vscode.ExtensionContext): void {
     resolveWebviewView(resolved) {
       view = resolved;
       resolved.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')] };
-      resolved.webview.onDidReceiveMessage((message: { type: string; text?: string; id?: string; target?: string }) => {
+      resolved.webview.onDidReceiveMessage((message: { type: string; text?: string; id?: string; target?: string; sessionId?: string; eventId?: string; answers?: unknown }) => {
         const submittedContext = message.type === 'send' ? codeContext.items() : [];
         if (message.type === 'stop') {
           if (activeSession) void connect().then(c => c.rpc.cancel(activeSession!)).catch(fail);
@@ -113,10 +121,20 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         void enqueue(async () => {
           switch (message.type) {
+            case 'answerQuestion':
+            case 'cancelQuestion': {
+              try {
+                if (!activeSession || message.sessionId !== activeSession || !message.eventId) throw new Error('提问不属于当前会话。');
+                const { questions } = await connect();
+                await questions.answer(activeSession, message.eventId, message.answers, message.type === 'cancelQuestion');
+              } catch (error) { send({ type: 'questionError', eventId: message.eventId, message: error instanceof Error ? error.message : String(error) }); }
+              break;
+            }
             case 'ready':
               await connect(); send({ type: 'status', status: 'ready', label: hostname() });
               if (activeSession) await subscribe(activeSession);
               pushContext();
+              pushQuestions();
               break;
             case 'new': await newSession(); break;
             case 'history': await chooseHistory(); break;
@@ -138,7 +156,8 @@ export function activate(context: vscode.ExtensionContext): void {
             }
             case 'send': {
               if (!message.text?.trim()) return;
-              const { rpc } = await connect();
+              const { rpc, questions } = await connect();
+              if (!questions.ready) throw new Error('提问通道正在重新连接，请稍后发送。');
               if (!activeSession) await newSession();
               if (submittedContext.some(a => a.preview.length > 60_000)) throw new Error('当前选区超过 60000 字符，请缩小选区或移除引用。');
               const text = message.text + submittedContext.map(a => `\n\n--- 附加上下文 ---\n${a.text}`).join('');
@@ -154,7 +173,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }, undefined, context.subscriptions);
       const nonce = randomUUID().replace(/-/g, '');
       const resource = (file: string) => resolved.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', file));
-      resolved.webview.html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${resolved.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${resource('sidebar.css')}"></head><body><div id="app"></div><script nonce="${nonce}" src="${resource('markdown-it.min.js')}"></script><script nonce="${nonce}" src="${resource('transcript.js')}"></script><script nonce="${nonce}" src="${resource('sidebar.js')}"></script></body></html>`;
+      resolved.webview.html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${resolved.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${resource('sidebar.css')}"></head><body><div id="app"></div><script nonce="${nonce}" src="${resource('markdown-it.min.js')}"></script><script nonce="${nonce}" src="${resource('transcript.js')}"></script><script nonce="${nonce}" src="${resource('questions.js')}"></script><script nonce="${nonce}" src="${resource('sidebar.js')}"></script></body></html>`;
     }
   }, { webviewOptions: { retainContextWhenHidden: true } }));
   context.subscriptions.push(vscode.commands.registerCommand('dshNative.newSession', () => enqueue(newSession)));

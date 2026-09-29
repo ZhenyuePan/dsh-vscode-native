@@ -21,6 +21,7 @@ A compact, **unofficial** VS Code frontend for [DeepSeek Harness](https://github
 - 显式添加文件或选区，可预览和移除，右键菜单可固定代码引用。
 - Markdown 表格、列表、代码块复制，点击工作区文件链接跳转到代码行。
 - 可折叠思考过程、工具调用和文件差异卡片。
+- `ask_user_question` 直接显示交互选项，支持单选、多选、文字回答和取消；无需把答案作为普通聊天消息发送。
 - 无头像紧凑布局，适配 VS Code 主题和窄侧栏。
 
 ## Install

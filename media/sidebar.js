@@ -43,6 +43,8 @@
   jump.onclick = () => { feed.scrollTop = feed.scrollHeight; updateJump(); };
   feed.addEventListener('scroll', updateJump, { passive: true });
   composer.append(chips, input, send); wrap.append(jump, composer, bottom, hint);
+  const questions = new DshQuestionPanel(post, content, active => { composer.hidden = bottom.hidden = active; scheduleRender(); });
+  wrap.prepend(questions.node);
   app.append(toolbar, taskbar, feed, errorbar, wrap);
   function controls() {
     const busy = transcript.running || pending;
@@ -136,7 +138,7 @@
       }
       feed.append(turn); previousRole = row.role;
     }
-    if (pending || transcript.running) feed.append(el('div', 'working', pending ? '正在发送…' : '正在处理…'));
+    if (pending || transcript.running) feed.append(el('div', 'working', questions.current ? '等待你回答…' : pending ? '正在发送…' : '正在处理…'));
     if (transcript.title) title.textContent = transcript.title;
     model.textContent = transcript.model + ' ⌄'; model.title = '选择模型 · ' + transcript.model;
     if (nearBottom) feed.scrollTop = feed.scrollHeight; else feed.scrollTop = position;
@@ -145,8 +147,10 @@
   function scheduleRender() { if (!scheduled) { scheduled = true; requestAnimationFrame(() => { scheduled = false; render(); }); } }
   window.addEventListener('message', e => {
     const m = e.data;
+    if (m.type === 'questions') { questions.update(m.sessionId, m.items || []); return; }
+    if (m.type === 'questionError') { questions.fail(m.eventId, m.message); return; }
     if (m.type === 'status') { connected = m.status === 'ready'; connection.className = `connection ${m.status}`; statusText.textContent = m.label; statusText.title = m.label; }
-    if (m.type === 'session') { session = m.id; transcript.reset(); expanded.clear(); title.textContent = '新会话'; errorbar.hidden = true; }
+    if (m.type === 'session') { session = m.id; questions.update(session, []); transcript.reset(); expanded.clear(); title.textContent = '新会话'; errorbar.hidden = true; }
     if (m.type === 'frame') { transcript.apply(m.value); }
     if (m.type === 'accepted') { pending = false; input.value = ''; resizeInput(); vscode.setState({ draft: '' }); title.textContent = m.title || '当前会话'; }
     if (m.type === 'model') transcript.model = m.label;

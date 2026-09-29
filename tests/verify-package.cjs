@@ -7,7 +7,7 @@ assert(installed, 'Pass the installed extension folder');
 const original = Module._load;
 Module._load = function(id, ...args) { return id === 'vscode' ? {} : original.call(this, id, ...args); };
 assert.equal(typeof require(path.join(installed, 'out/extension.js')).activate, 'function');
-for (const file of ['media/sidebar.css','media/sidebar.js','media/transcript.js','media/markdown-it.min.js','media/markdown-it.LICENSE','node_modules/ws/index.js']) assert(fs.existsSync(path.join(installed, file)), file);
+for (const file of ['media/sidebar.css','media/sidebar.js','media/transcript.js','media/questions.js','media/markdown-it.min.js','media/markdown-it.LICENSE','node_modules/ws/index.js']) assert(fs.existsSync(path.join(installed, file)), file);
 assert.equal(JSON.parse(fs.readFileSync(path.join(installed, 'package.json'))).version, require('../package.json').version);
 assert(fs.existsSync(path.join(installed, 'THIRD_PARTY_NOTICES.md')));
 assert(['LICENSE', 'LICENSE.txt'].some(file => fs.existsSync(path.join(installed, file))));

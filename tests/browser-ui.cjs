@@ -23,6 +23,7 @@ async function main() {
  await page.addStyleTag({content:fs.readFileSync(path.join(base,'sidebar.css'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(base,'markdown-it.min.js'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(base,'transcript.js'),'utf8')});
+ await page.addScriptTag({content:fs.readFileSync(path.join(base,'questions.js'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(base,'sidebar.js'),'utf8')});
  const dispatch = m=>page.evaluate(m=>window.dispatchEvent(new MessageEvent('message',{data:m})),m);
  await dispatch({type:'status',status:'ready',label:'workspace'});
@@ -94,6 +95,33 @@ async function main() {
  await page.getByRole('button',{name:'移除 auth.ts:10–12',exact:true}).click();assert((await page.evaluate(()=>window.sent)).some(m=>m.type==='removeAttachment'&&m.id==='auto'));
  assert.deepEqual(errors,[]);
  console.log('Cline layout: dark/light/high-contrast, 280/320/400px, textarea autosize, scroll-to-latest, stop and context chip actions passed');
+ await dispatch({type:'session',id:'questions-test'});
+ const request={eventId:'event-questions',sessionId:'questions-test',submitting:false,questions:[
+  {id:'color',header:'颜色',question:'选择一个主题色',options:[{label:'蓝色',description:'清晰、安静'},{label:'绿色'}]},
+  {id:'features',header:'功能',question:'需要哪些功能？',multiSelect:true,options:[{label:'搜索'},{label:'历史'}]},
+  {id:'notes',header:'备注',question:'补充要求'}
+ ]};
+ await dispatch({type:'questions',sessionId:'questions-test',items:[request]});
+ assert(await page.getByText('需要你回答',{exact:true}).isVisible());assert(await page.getByRole('button',{name:'提交回答',exact:true}).isDisabled());
+ await page.getByRole('radio',{name:'蓝色 清晰、安静'}).check();
+ await page.getByRole('checkbox',{name:'搜索',exact:true}).check();await page.getByRole('checkbox',{name:'历史',exact:true}).check();
+ await page.getByLabel('备注：你的回答',{exact:true}).fill('保持紧凑');
+ // Ordinary streaming frames must not replace the form or lose its input/focus.
+ await dispatch({type:'frame',value:{type:'event',event:{seq:12,type:'turn/start',data:{}}}});
+ await page.waitForTimeout(60);assert.equal(await page.getByLabel('备注：你的回答',{exact:true}).inputValue(),'保持紧凑');
+ await page.setViewportSize({width:320,height:800});
+ await page.screenshot({path:path.join(outputs,'dsh-user-questions-320.png')});
+ await page.getByRole('button',{name:'提交回答',exact:true}).click();
+ const result=(await page.evaluate(()=>window.sent)).find(m=>m.type==='answerQuestion');
+ assert.deepEqual(result,{type:'answerQuestion',sessionId:'questions-test',eventId:'event-questions',answers:[{id:'color',selected:['蓝色']},{id:'features',selected:['搜索','历史']},{id:'notes',selected:[],custom:'保持紧凑'}]});
+ assert(await page.getByRole('button',{name:'正在提交…',exact:true}).isDisabled());
+ await dispatch({type:'questionError',eventId:'event-questions',message:'模拟网络错误，请重试'});
+ assert.equal(await page.getByLabel('备注：你的回答',{exact:true}).inputValue(),'保持紧凑');
+ await page.getByLabel('颜色：其他回答',{exact:true}).fill('紫色');assert.equal(await page.getByRole('radio',{name:'蓝色 清晰、安静'}).isChecked(),false);
+ await page.getByRole('button',{name:'取消提问',exact:true}).click();assert((await page.evaluate(()=>window.sent)).some(m=>m.type==='cancelQuestion'&&m.eventId==='event-questions'));
+ await dispatch({type:'questions',sessionId:'questions-test',items:[]});assert(await page.locator('.question-panel').isHidden());assert(await page.locator('.composer').isVisible());
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);
+ console.log('Question UI: options, multi-select, custom text, streaming draft retention, structured submit, retry, cancellation and narrow layout passed');
  const store=new Transcript(); store.apply(fixture); const count=store.rows().length; store.apply(fixture); assert.equal(store.rows().length,count);
  store.apply({type:'assistant-stream',frame:{type:'start',attemptId:'a'}});
  store.apply({type:'assistant-stream',frame:{type:'chunk',attemptId:'a',index:0,chunk:{type:'text-delta',index:0,text:'hello'}}});

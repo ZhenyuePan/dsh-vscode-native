@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import { DshEndpoint, Json, RemoteFrame, RpcFailure, uuid } from './protocol';
 
-type Follow = { sessionId: string; onItem: (value: Json) => void; onError?: (error: Error) => void; streamId?: string };
+type Follow = { endpoint: string; payload: object; onItem: (value: Json) => void; onError?: (error: Error) => void; onReset?: () => void; streamId?: string };
 
 /** One physical /api/remote.mux connection shared by every logical Remote stream.
  * Live follows are restored after a socket drop; their first item is DSH's fresh snapshot. */
@@ -14,9 +14,12 @@ export class DshRemoteMux {
   public constructor(private readonly endpoint: DshEndpoint) {}
 
   async follow(sessionId: string, onItem: (value: Json) => void, onError?: (error: Error) => void): Promise<() => void> {
+    return this.stream('session/follow', { args: { request: { address: { kind: 'session', sessionId }, assistantStream: true } } }, onItem, onError);
+  }
+  async stream(endpoint: string, payload: object, onItem: (value: Json) => void, onError?: (error: Error) => void, onReset?: () => void): Promise<() => void> {
     this.deliberatelyClosed = false;
     const id = uuid();
-    this.follows.set(id, { sessionId, onItem, onError });
+    this.follows.set(id, { endpoint, payload, onItem, onError, onReset });
     try { await this.openFollow(id); } catch (error) { this.follows.delete(id); throw error; }
     return () => {
       const follow = this.follows.get(id);
@@ -30,6 +33,7 @@ export class DshRemoteMux {
     this.deliberatelyClosed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = undefined;
+    for (const follow of this.follows.values()) follow.onReset?.();
     this.follows.clear(); this.socket?.close(); this.socket = undefined;
   }
 
@@ -39,7 +43,8 @@ export class DshRemoteMux {
     await this.connect();
     const streamId = uuid();
     follow.streamId = streamId;
-    this.send({ type: 'open', streamId, endpoint: 'session/follow', payload: { args: { request: { address: { kind: 'session', sessionId: follow.sessionId }, assistantStream: true } } } });
+    if (!this.follows.has(id)) return;
+    this.send({ type: 'open', streamId, endpoint: follow.endpoint, payload: follow.payload });
   }
   private async connect(): Promise<void> {
     if (this.socket?.readyState === WebSocket.OPEN) return;
@@ -52,8 +57,9 @@ export class DshRemoteMux {
       socket.once('error', reject);
       socket.on('message', (data) => this.dispatch(String(data)));
       socket.on('close', () => {
-        if (this.socket === socket) this.socket = undefined;
-        for (const follow of this.follows.values()) follow.streamId = undefined;
+        if (this.socket !== socket) return;
+        this.socket = undefined;
+        for (const follow of this.follows.values()) { follow.streamId = undefined; follow.onReset?.(); }
         if (!this.deliberatelyClosed && this.follows.size) this.scheduleReconnect();
       });
     }).finally(() => { this.connecting = undefined; });
@@ -77,6 +83,7 @@ export class DshRemoteMux {
     const [id, follow] = found;
     if (frame.type === 'item') { follow.onItem(frame.value ?? null); return; }
     follow.streamId = undefined;
+    follow.onReset?.();
     if (frame.type === 'error') { this.follows.delete(id); follow.onError?.(remoteError(frame.error)); return; }
     // `end` is a normal terminal frame. It is distinct from a locally cancelled live follow.
     this.follows.delete(id);

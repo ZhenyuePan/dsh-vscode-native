@@ -1,7 +1,7 @@
 {
   "name": "dsh-vscode-native",
   "displayName": "DeepSeek Harness Native",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Unofficial VS Code frontend for DeepSeek Harness: streaming chat, code context and tool diffs.",
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/ZhenyuePan/dsh-vscode-native.git" },
@@ -29,7 +29,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p . && node scripts/vendor.cjs",
     "watch": "tsc -watch -p .",
-    "test": "node tests/editor-context.cjs && node tests/code-links.cjs",
+    "test": "node tests/editor-context.cjs && node tests/code-links.cjs && node tests/questions.cjs",
     "test:ui": "node tests/browser-ui.cjs",
     "package:vsix": "vsce package",
     "test:runtime": "node out/test-runtime.js"

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4
+
+- Fixed missing `ask_user_question` choices by subscribing to DSH's `$events` stream.
+- Added single/multiple choice and free-text answers, structured reply delivery and cancellation.
+- Added session/generation validation, duplicate-submit protection and preserved form drafts during streaming.
+- Added question-service tests, browser interaction tests and an optional real DSH round-trip test.
+
 ## 0.2.3
 
 - First open-source release under MIT; added contribution and security guidance.
