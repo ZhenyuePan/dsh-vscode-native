@@ -10,10 +10,11 @@ export async function exchangeLaunchToken(tokenUrl: string): Promise<DshEndpoint
 
   const response = await fetch(parsed, { redirect: 'manual' });
   if (response.status !== 303) throw new Error(`DSH token exchange returned HTTP ${response.status}, expected 303.`);
-  const rawCookies = typeof (response.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie === 'function'
-    ? (response.headers as Headers & { getSetCookie: () => string[] }).getSetCookie()
-    : [response.headers.get('set-cookie') ?? ''];
-  const authCookie = rawCookies.map((value) => value.split(';', 1)[0]).find((value) => value.startsWith('dsh-auth-'));
+  const rawCookies =
+    typeof (response.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie === 'function'
+      ? (response.headers as Headers & { getSetCookie: () => string[] }).getSetCookie()
+      : [response.headers.get('set-cookie') ?? ''];
+  const authCookie = rawCookies.map(value => value.split(';', 1)[0]).find(value => value.startsWith('dsh-auth-'));
   if (!authCookie) throw new Error('DSH token exchange did not return a dsh-auth cookie.');
   return { origin: parsed.origin, tokenUrl, cookie: authCookie };
 }

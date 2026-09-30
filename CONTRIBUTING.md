@@ -15,6 +15,11 @@ npm run test:ui
 npm run package:vsix
 ```
 
+提交前请运行 `npm run format` 统一代码格式（Prettier，配置见 `.prettierrc.json`）；
+`npm run format:check` 只校验不写入，适合放进编辑器或本地钩子。
+偏好 shell 的话可以用 `scripts/format.sh`，它支持 `--check`（CI 门禁）、`--staged`（只格式化已暂存文件，便于 pre-commit）和显式路径。
+配置统一 140 列、单引号、2 空格缩进和 LF 行尾，`.editorconfig` 为编辑器提供同样的约定。
+
 Linux 首次运行浏览器测试可能需要 `npx playwright install --with-deps chromium`。
 UI 测试使用模拟消息，不调用模型；截图保存在 `artifacts/ui/`。
 `node tests/runtime-ui.cjs` 是可选的真实 DSH 集成测试，需要你自己的模型配置，可能产生 API 费用，默认 CI 不运行。

@@ -14,9 +14,20 @@ export interface RpcFailure {
 
 export type RpcResult<T> = { ok: true; value: T } | { ok: false; error: RpcFailure };
 
-export interface SessionSummary { sessionId: string; updatedAt: number; running: boolean; blank: boolean; cwd?: string; }
-export interface SessionListValue { items: SessionSummary[]; }
-export interface SessionCreateValue { sessionId: string; agentPreset?: string; }
+export interface SessionSummary {
+  sessionId: string;
+  updatedAt: number;
+  running: boolean;
+  blank: boolean;
+  cwd?: string;
+}
+export interface SessionListValue {
+  items: SessionSummary[];
+}
+export interface SessionCreateValue {
+  sessionId: string;
+  agentPreset?: string;
+}
 
 export type RemoteFrame =
   | { type: 'item'; streamId: string; value?: Json }

@@ -67,10 +67,12 @@ npm run compile
 npm test
 npx playwright install chromium
 npm run test:ui
+npm run format
 npm run package:vsix
 ```
 
 编译时会复制 Markdown 渲染器及其许可证到 `media/`。打包时会自动重新编译。
+`npm run format` 用 Prettier 统一代码格式，`npm run format:check` 只校验不写入。
 Linux 安装浏览器依赖可用 `npx playwright install --with-deps chromium`。
 UI 测试使用模拟数据，不需要模型密钥。可选的真实集成测试见 [贡献指南](CONTRIBUTING.md)。
 
